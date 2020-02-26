@@ -1,0 +1,94 @@
+---
+title: "team"
+author: "Tanner Boyle & Hunter Rose"
+date: "2/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+
+dat <- read_xls('C:\\Users\\tanne\\OneDrive\\Documents\\R\\ds202_lab3\\GSS.xls')
+
+str(dat)
+
+names(dat) <- c("Year", "ID", "Marital_Status", "Sex", "Affiliation", "Happiness", "Ballot")
+
+dat$Year <- factor(dat$Year)
+
+dat$Marital_Status <- factor(dat$Marital_Status, levels= c("No answer", "Never married", "Married", "Separated", "Divorced", "Widowed"))
+
+dat$Affiliation <- factor(dat$Affiliation, levels= c("Strong democrat", "Not str democrat", 
+                                                     "Ind,near dem","Independent", "Ind,near rep",
+                                                     "Not str republican", "Strong republican", 
+                                                     "Other party", "Don't know", "No answer"))
+
+#levels= c("Never married", "Married", "Separated", "Divorced", "Widowed")
+
+dat$Happiness <- factor(dat$Happiness, levels = c("Not too happy", "Pretty happy", "Very happy"))
+
+Problem1_DF <- dat %>% 
+  filter(!is.na(Marital_Status),
+         !is.na(Happiness),
+         Marital_Status != "No answer") %>% 
+  group_by(Marital_Status, Happiness) %>% 
+  summarise(n=n()) %>% 
+  as_data_frame() %>% 
+  group_by(Marital_Status) %>% 
+  mutate(percent = n/sum(n))
+
+Problem2_DF <- dat %>% 
+  filter(!is.na(Marital_Status),
+         !is.na(Happiness),
+         !is.na(Sex),
+         Marital_Status == "Separated") %>%
+  group_by(Sex,Happiness) %>% 
+  summarise(n=n()) %>% 
+  as_data_frame() %>% 
+  group_by(Sex) %>% 
+  mutate(percent = n/sum(n))
+
+Problem3_DF <- dat %>% 
+  filter(Affiliation %in% c("Strong democrat", "Not str democrat", 
+                            "Ind,near dem","Independent", "Ind,near rep",
+                            "Not str republican", "Strong republican"), 
+         !is.na(Happiness)) %>% 
+  group_by(Affiliation, Happiness) %>% 
+  summarise(n=n()) %>% 
+  as_data_frame() %>% 
+  group_by(Affiliation) %>% 
+  mutate(percent = n/sum(n))
+```
+
+```{r}
+Problem1_DF %>% 
+  ggplot(aes(fill=Happiness, x=Marital_Status, y=percent)) +
+  geom_bar(position="dodge", stat="identity")
+```
+
+The takeaway from this graph to us is that the unhappiest people are those that are separated -- while divorced and widowed don't appear to be that much higher than the never-married crowd.
+
+
+```{r}
+Problem2_DF %>% 
+  ggplot(aes(fill=Happiness, x=Sex, y=percent)) +
+  geom_bar(position="dodge", stat="identity")
+```
+
+
+We don't think that Sex has an impact on the happiness of Separated adults. Percentages appear to be pretty similar across the board. 
+
+
+```{r}
+Problem3_DF %>% 
+  ggplot(aes(fill=Happiness, x=Affiliation, y=percent)) +
+  geom_bar(position="dodge", stat="identity") + 
+  theme(axis.text.x = element_text(angle=60, hjust = 1))
+```
+
+Yes, we think that there is a fairly clear trend of Left-Leaning respondents reporting lower levels of happiness. Specifically, the "Very happy" column appears to have a sort of parabola effect where Right-Leaning respondents are reporting the highest percentages of "Very happy" and lowest percentages of "Not too happy". 
+
+
