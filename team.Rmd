@@ -11,7 +11,7 @@ library(readxl)
 library(ggplot2)
 library(dplyr)
 
-dat <- read_xls('C:\\Users\\tanne\\OneDrive\\Documents\\R\\ds202_lab3\\GSS.xls')
+dat <- read_xls('GSS.xls')
 
 str(dat)
 
@@ -91,4 +91,98 @@ Problem3_DF %>%
 
 Yes, we think that there is a fairly clear trend of Left-Leaning respondents reporting lower levels of happiness. Specifically, the "Very happy" column appears to have a sort of parabola effect where Right-Leaning respondents are reporting the highest percentages of "Very happy" and lowest percentages of "Not too happy". 
 
+Problem 4.1: How does happiness levels compare between gender regardless of all other factors?
+```{r}
+Problem4.1_DF <- dat %>% 
+  filter(!is.na(Year),
+         !is.na(Happiness),
+         !is.na(Sex)) %>%
+  group_by(Sex,Happiness) %>% 
+  summarise(n=n()) %>% 
+  as_data_frame() %>% 
+  group_by(Sex) %>% 
+  mutate(percent = n/sum(n))
+```
+```{r}
+Problem4.1_DF %>%
+  ggplot(aes(fill=Happiness, y=percent, x=Sex)) + geom_bar(position="dodge", stat="identity")
+```
+
+We can see that Male and Females have relatively the same amount of happiness levels. Females have a few more very happy people while males have a few more Pretty happy people.
+
+Problem 4.2: What is the gender ratio in each political group?
+```{R}
+Problem4.2_DF <- dat %>%
+  filter(!is.na(Happiness),
+         !is.na(Affiliation),
+         !is.na(Sex)) %>%
+  group_by(Happiness, Affiliation, Sex) %>%
+  summarise(n=n())%>%
+  as_data_frame() %>%
+  group_by(Sex) %>%
+  mutate(percent=n/sum(n))
+```
+```{r}
+Problem4.2_DF %>%
+  ggplot(aes(fill=Sex, y=percent, x=Affiliation)) + geom_bar(position="dodge", stat="identity") + theme(axis.text.x = element_text(angle=60, hjust = 1))
+```
+
+
+This shows us that there are more people who identify with the democratic party than any other. This is interesting because when we looked at the happiness level by each political affiliation, we saw that republicans tended to be more happy. This shows that the republican are in a slight minority to the democrats, and tend to be happier.
+
+```{r}
+dat1 <- read_xls('GSS_1.xls')
+str(dat1)
+names(dat1) <- c("Year", "ID", "Hours_worked", "Marital_Status", "Sex", "Income", "Affiliation", "Happiness", "Ballot")
+
+dat1$Year <- factor(dat1$Year)
+
+dat1$Marital_Status <- factor(dat1$Marital_Status, levels= c("No answer", "Never married", "Married", "Separated", "Divorced", "Widowed"))
+
+dat1$Affiliation <- factor(dat1$Affiliation, levels= c("Strong democrat", "Not str democrat", 
+                                                     "Ind,near dem","Independent", "Ind,near rep",
+                                                     "Not str republican", "Strong republican", 
+                                                     "Other party", "Don't know", "No answer"))
+
+dat1$Happiness <- factor(dat1$Happiness, levels = c("Not too happy", "Pretty happy", "Very happy"))
+```
+Problem 4.3: How does income relate to happiness?
+```{r}
+Problem4.3_DF <- dat1 %>%
+  filter(!is.na(Happiness),
+         !is.na(Income),
+         !is.na(Year),
+         Income != "Not applicable") %>%
+  group_by(Happiness, Income) %>%
+  summarise(n=n()) %>%
+  as_data_frame() %>%
+  group_by(Happiness) %>%
+  mutate(percent=n/sum(n))
+```
+```{r}
+Problem4.3_DF %>%
+  ggplot(aes(fill=Income, x=Happiness, y=percent)) + geom_bar(position="dodge", stat="identity")
+```
+
+This graph shows us that people in the very happy category tend have a similar income distribution to the other classes. The largest income class (25000 or more) is the largest group for each happiness level but gets higher as happiness goes up. The lower income distributions are very similar there is an increase in the lower income classes as happiness decreases.
+
+Problem 4.4: How does the amount of hours worked per week affect happiness?
+```{r}
+Problem4.4_DF <- dat1 %>%
+  filter(!is.na(Happiness),
+         !is.na(Hours_worked),
+         !is.na(Year),
+         Hours_worked != "Not applicable",
+         Hours_worked != "No answer") %>%
+  group_by(Happiness, Hours_worked) %>%
+  summarise(n=n()) %>%
+  as_data_frame() %>%
+  group_by(Happiness) %>%
+  mutate(percent=n/sum(n))
+```
+```{r}
+Problem4.4_DF %>%
+  ggplot(aes(fill=Hours_worked, y=percent, x=Happiness)) + geom_bar(position="dodge", stat="identity")
+```
+Although this graph doesn't have the best readability, it has good data. It shows that A lot of people who aren't too happy are working 40 hour weeks. What is interesting is in the category of very happy people, the second largest group is working 50 hour weeks. This relates to if you are working at a job you enjoy than you are happier regardless of the hours you are putting in.
 
